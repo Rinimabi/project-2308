@@ -1,4 +1,4 @@
-package Redis.防止重复提交方案;
+package Java.com.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

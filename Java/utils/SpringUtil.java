@@ -1,4 +1,4 @@
-package Java.实用Util类;
+package Java.utils;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
