@@ -1,4 +1,4 @@
-推荐读一下[MyCat指南](http://www.mycat.io/document/mycat-definitive-guide.pdf)，里面对数据库分片、mysql的分库分表、处理方式都作了很好的分析。
+推荐读一下[MyCat指南](http://www.mycat.org.cn/document/mycat-definitive-guide.pdf)，里面对数据库分片、mysql的分库分表、处理方式都作了很好的分析。
 
 ## 1.如何搭建主从数据库和读写分离？
 按照[CentOS下mysql多实例操作指南](https://blog.51cto.com/13799042/2126621)构建主从数据库后，再按照[MySQL主从复制](https://www.jianshu.com/p/4541a68d16d7)进行从库的slave配置，需要注意：
