@@ -1,6 +1,5 @@
 #### 双亲委派机制的作用
-##### classLoader
-- 它是用来加载 Class 的，它相当于类的命名空间，起到了类隔离的作用。
+- **classLoader**它是用来加载 Class 的，它相当于类的命名空间，起到了类隔离的作用。
 - 字节码加密技术就是依靠定制 ClassLoader 来实现
 - BootstrapClassLoader、ExtensionClassLoader、AppClassLoader
 - 双亲委派：AppClassLoader 在加载一个未知的类名时会先让ExtensionClassLoader去加载，ExtensionClassLoader也会尝试先让BootstrapClassLoader去加载，当都加载不了才会去搜索classpath。
@@ -14,7 +13,12 @@
 
 [老大难的 Java ClassLoader 再不理解就老了](https://zhuanlan.zhihu.com/p/51374915)
 #### spring的加载过程
-
+##### springboot的启动过程
+##### bean的加载过程
+##### 如何实现一个starter
+##### cglib和porxy有什么不同
+##### IOC和AOP
+- Inversion of Control，将原本需要自己去*new*出来的对象和类调用关系，变成了交给spring帮你去管理（@service、@controller、@component），你只管取就行（@resource）。
 #### mq的死信队列
 #### docker的linux内部实现原理
 #### spring是如何实现事务隔离的
@@ -23,4 +27,6 @@
 #### springcloud有哪些组成
 #### hystrix如何实现限流和熔断
 #### redisson是如何实现分布式锁的
+#### redis如何进行性能优化
+[一些比较好的Redis 性能优化思路总结](https://mp.weixin.qq.com/s/mf9ZmQDrp7PCnxVFIDaWFQ)
 #### 内部类为什么要使用静态内部类
