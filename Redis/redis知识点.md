@@ -34,3 +34,18 @@ Redis 发布订阅(pub/sub)是一种消息通信模式：发送者(pub)发送消
 #### CPU瓶颈
 - 禁止耗时的指令，如 [KEYS *]
 - 删除大对象内存使用异步命令[UNLINK]，而不用[DEL]
+
+### 5.Redis的基础数据类型和应用场景
+#### String
+键都是字符串类型，用于缓存信息
+#### Hash
+哈希类型是指键值本身又是一个键值对结构，哈希可以用来存放用户信息，比如实现购物车
+![购物车](https://upload-images.jianshu.io/upload_images/14359229-1a0de4f097fcbbdb.jpg?imageMogr2/auto-orient/strip|imageView2/2/w/629/format/webp)
+[Redis-hash类型数据实现购物车](https://www.jianshu.com/p/a00801ea872f)
+[天猫Java研发三面：讲讲Redis实现购物车的设计思路！](https://www.codenong.com/js0f5df2973d1c/)
+#### List
+列表（list）类型是用来存储多个有序的字符串。可以做简单的消息队列的功能
+#### Set
+集合（set）类型也是用来保存多个的字符串元素，不能有重复，不能通过下标取值，利用Set的交集、并集、差集等操作，可以计算共同喜好，全部的喜好，自己独有的喜好等功能。
+#### Sorted Set
+Sorted Set 多了一个权重参数 Score，集合中的元素能够按 Score 进行排列。可以做排行榜应用，取 TOP N 操作。
