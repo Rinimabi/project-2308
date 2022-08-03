@@ -326,6 +326,7 @@ java
 				- 主要用于两个线程之间的数据交换
 			- AbstractQueuedSynchronizer
 				- 核心思想？
+				- 基于CAS进行获取锁
 				- 是一个用来构建锁和同步器的框架
 				- 利用了一个state来表示 同步状态
 				- 提供一个FIFO队列，节点是线程引用，记录着等待的线程
@@ -339,6 +340,7 @@ java
 					- Share(共享)：多个线程可同时执行，如Semaphore/CountDownLatch。
 				- unsafe类
 					- 提供CAS操作
+					- 该类保障了AQS的原子性
 				- LockSupport类
 					- 用来创建锁和其他同步类的基本线程阻塞原语
 					- LockSupport.park()
@@ -349,23 +351,145 @@ java
 						- Thread.sleep()、Object.wait()、Condition.await()、LockSupport.park()的区别? 
 						- 如果在wait()之前执行了notify()会怎样? 
 						- 如果在park()之前执行了unpark()会怎样?
+				- CAS
+					- 作用是让CPU先进行比较两个值是否相等，然后原子地更新某个位置的值
+					- 是靠硬件实现的，JVM只是封装了汇编调用
+					- 先比较下在旧值有没有发生变化，如果没有发生变化，才交换成新值，发生了变化则不交换
+					- CAS 方式为乐观锁，synchronized 为悲观锁
+					- CAS 问题
+						- ABA问题
+							- 如果一个值原来是A，变成了B，又变成了A，那么使用CAS进行检查时则会发现它的值没有发生变化，但是实际上却变化了
+							- 解决思路就是使用版本号
+							- Atomic包里提供了一个类AtomicStampedReference来解决ABA问题
+						- 自旋CAS时间长的话CPU开销比较大
+						- CAS只能保证单个变量的原子性操作
+							- 多个共享变量合并成一个共享变量来操作
+							- 使用AtomicReference来操作对象，将多个变量放入对象中整体CAS
 		- Collections
-			- ArrayBlockingQueue
-			- LinkedBlockingQueue
-			- LinkedBlockingDeque
-			- ConcurrentLinkedQueue
-			- ConcurrentLinkedDeque
-			- DelayQueue
-			- PriorityBlockingQueue
-			- SynchronousQueue
-			- LinkedTransferQueue
+			- BlockingQueue
+				- 用于一个线程生产对象，而另外一个线程消费这些对象的场景
+				- ArrayBlockingQueue
+					- 内部实现是将对象放到一个数组里
+					- 需要设定大小，并且无法更改
+					- 内部以 FIFO(先进先出)的顺序对元素进行存储
+				- LinkedBlockingQueue
+					- 内部以一个链式结构(链接节点)对其元素进行存储
+					- 默认使用 Integer.MAX_VALUE 作为上限，可以手动设置
+					- 内部以 FIFO(先进先出)的顺序对元素进行存储
+				- ConcurrentLinkedQueue
+				- DelayQueue
+					- 对元素进行持有直到一个特定的延迟到期
+					- 注入其中的元素必须实现 java.util.concurrent.Delayed 接口
+					- 下一次 take 被调用的时候通过getDelay() 方法返回的值判断是否过期和释放掉
+					- Delayed 对象之间可以进行对比
+				- PriorityBlockingQueue
+					- 是一个无界的并发队列
+					- 所有插入到 PriorityBlockingQueue 的元素必须实现 java.lang.Comparable 接口
+					- 是二叉树最小堆的实现
+					- 每次出队都返回优先级最高的元素
+					- 通过实现Comparable来确定优先级
+				- SynchronousQueue
+					- 同时只能够容纳单个元素
+				- LinkedTransferQueue
+				- BlockingDeque
+					- 继承自 BlockingQueue
+					- 一个双端队列，可以从任意一端插入或者抽取元素
+					- 如果双端队列已满，插入线程将被阻塞
+					- 如果双端队列为空，移除线程将被阻塞
+					- LinkedBlockingDeque
+					- ConcurrentLinkedDeque
 			- CopyOnWriteArrayList
+				- COWIterator
+					- 有一个Object类型的数组作为CopyOnWriteArrayList数组的快照
+					- 在迭代器的生存期内，数组的快照不会更改
+					- 对列表的增删改不会影响到迭代器的使用，多线程下不可能发生冲突
+				- 属性中有一个ReentrantLock，用来保证线程安全访问
+				- 有一个Object类型的数组，用来存放具体的元素
+				- 修改时使用copyOf函数来复制数组在进行修改
+				- add()流程
+					- 获取锁(保证多线程的安全访问)
+					- 将当前Object[]复制一份作为newElements
+					- 将新元素设置到newElements[length]
+					- 再设置当前Object[]为newElements
+					- 释放锁
+				- addIfAbsent方法
+					- 如果数组中不存在，则添加；否则，不添加，直接返回
+					- 可以保证多线程环境下不会重复添加元素
+				- 缺陷
+					- 写操作的时候，需要拷贝数组，会消耗内存
+					- 容易导致导致young gc或者full gc
+					- 不能用于实时读的场景，多线程操作可能读取到旧数据，只保证最终一致性
+					- 合适读多写少的场景
+				- Vector使用synchronized，效率没有它高
 			- CopyOnWriteArraySet
+				- 性能会略低于CopyOnWriteArrayList
+				- 使用addIfAbsent方法保证不重复
 			- ConcurrentSkipListSet
+				- 可以根据Comparator排序
 			- ConcurrentSkipListMap
+				- 线程安全的有序的哈希表
+				- 可以根据Comparator排序
 		- Atomic
-			- 
+			- 使用volatile保证线程的可见性
+			- 使用CAS保证数据更新的原子性
+			- AtomicStampedReference
+				- 维护包含一个对象引用以及一个可以自动更新的版本号Stamped解决ABA问题
 		- Executors
+			- FutureTask
+				- 用来封装Callable和Runnable，监控线程
+				- 使用CAS来保证线程安全
+				- 保存一个volatile的state变量来表示任务状态（7种状态）
+				- cancel()方法用来取消异步任务的执行，返回true或false
+				- isCanceled()方法判断任务是否被取消
+				- isDone()方法判断任务是否已经完成
+				- get()方法获取任务执行结果
+					- 如果任务被取消则会抛出CancellationException异常
+					- 如果任务执行过程发生异常则会抛出ExecutionException异常
+					- 如果阻塞等待过程中被中断则会抛出InterruptedException异常
+					- 可以设置超时时间，如果阻塞等待过程中超时则会抛出TimeoutException异常
+			- ThreadPoolExecutor
+				- 降低资源消耗(线程无限制地创建，然后使用完毕后销毁)
+				- 提高响应速度(无须创建线程)
+				- 提高线程的可管理性
+				- 通过CAS来更新线程池的状态(AtomicInteger类型)
+				- 内部维护了一个HashSet对象，使用ReentrantLock加锁
+				- 参数
+					- corePoolSize 核心线程池大小
+					- maximumPoolSize 最大线程池大小
+					- keepAliveTime 线程最大空闲时间
+					- workQueue 线程等待队列
+					- threadFactory 线程创建工厂
+					- handler 拒绝策略
+						- AbortPolicy：默认测策略，抛出RejectedExecutionException运行时异常
+						- CallerRunsPolicy：这提供了一个简单的反馈控制机制，可以减慢提交新任务的速度
+						- DiscardPolicy：直接丢弃新提交的任务
+						- DiscardOldestPolicy：如果执行器没有关闭，队列头的任务将会被丢弃，然后执行器重新尝试执行任务（如果失败，则重复这一过程）
+				- 执行过程
+					- 当corePoolSize未满，直接加入队列
+					- 当corePoolSize已满，而BlockingQueue未满，加入BlockingQueue
+					- 当任务数超过maximumPoolSize，则交给RejectedExecutionHandler来处理任务
+				- 从任务的优先级，任务的执行时间长短，任务的性质(CPU密集/ IO密集)，任务的依赖关系来考虑使用
+					- CPU密集型: 尽可能少的线程，Ncpu+1 IO
+					- 密集型: 尽可能多的线程, Ncpu*2，比如数据库连接池
+				- ScheduledThreadExecutor
+					- 允许在指定的延迟后执行一次任务
+			- Fork/Join框架
+				- 分治算法(Divide-and-Conquer)的并行实现
+				- 工作窃取（work-stealing）算法是指某个线程从其他队列里窃取任务来执行
+					- 减少了线程间的竞争
+					- 充分利用资源
+					- 每个线程都有自己的一个WorkQueue，该工作队列是一个双端队列
+					- 其他进程可以从WorkQueue中poll任务并push到自己的WorkQueue中
+				- 使用ForkJoinTask创建任务
+					- 包括RecursiveTask、RecursiveAction、CountedCompleter三个继承类
+					- 实现compute方法
+					- 需要判断任务是否足够小，如果足够小就直接执行任务
+					- 如果不足够小，就必须分割成两个子任务
+					- 个子任务在调用 fork 方法时，又会进入compute方法
+					- 使用join方法会等待子任务执行完并得到其结果
+					- isCompletedAbnormally() 方法来检查任务是否已经抛出异常或已经被取消了
+				- 使用ForkJoinWorkerThread执行任务
+				- 使用ForkJoinPool管理任务
 	- String
 		- 不可变的好处
 			- hash值也不可变
