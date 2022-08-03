@@ -282,6 +282,90 @@ java
 				- 线程不安全，rehash在多线程下可能出现相同的hash值造成hash链上的引用进入死循环
 			- ConcurrentHashMap
 				- 并发控制使用Synchronized和CAS来操作
+	- JUC
+		- Lock框架和Tools类
+			- Condition
+				- 与Lock配合可以实现等待/通知模式
+				- 通过Lock的newCondition()方法获取
+				- 是同步器AbstractQueuedSynchronizer的内部类
+			- Lock
+				- 代码层面的锁
+				- 粒度更细
+				- 支持Condition监控
+				- 是乐观锁，synchronized悲观
+				- 需要手动释放锁，可能发生死锁
+				- 可以用 interrupt 来中断等待
+				- 竞争激烈时Lock 的性能要远远优于 synchronized
+				- ReentrantLock
+					- 可重入锁版本
+				- ReadWriteLock
+					- 有两把锁，读锁和写锁
+					- 只允许一个线程写入
+					- 允许多个线程在没有写入时同时读取
+					- 适合读多写少的场景
+					- 写多读少会遭遇饥饿(Starvation)问题
+						- 可以使用StampedLock解决，采用乐观读模式，加大了吞吐量
+					- ReentrantReadWriteLock，可重入锁版本
+			- CountDownLatch
+				- 拥有一个计算器去表示线程执行结束
+				- 计数器只能设置一次
+				- 每个线程执行完毕计算器就会减一直至归零
+				- 可以锁定若干个线程，直到计算器归零解锁
+				- 有一个内部类Sync，继承了AQS
+				- 使用场景
+					- 修改客户信息需要判断各个下游系统是否允许修改
+					- 订单签收需要判断外围系统是否已经准备好
+			- CyclicBarrier
+				- 内部使用ReentrantLock来实现线程锁操作
+				- CyclicBarrier使用加计数
+				- CyclicBarrier可以重用(可以重复await)
+				- CyclicBarrier不需要一个主线程进行动作，而是由线程本身互相确认准备就绪
+			- Phaser
+			- Semaphore
+			- Exchanger
+				- 主要用于两个线程之间的数据交换
+			- AbstractQueuedSynchronizer
+				- 核心思想？
+				- 是一个用来构建锁和同步器的框架
+				- 利用了一个state来表示 同步状态
+				- 提供一个FIFO队列，节点是线程引用，记录着等待的线程
+					- 一种CLH队列(虚拟的双向队列)
+					- 包括Sync queue(双向列表)和Condition queue(单向列表，只有使用condition时用到)
+					- 底层使用了模板方法
+				- 通过类似 acquire获取 和 release释放 的方式来 操纵状态
+				- AbstractQueuedLongSynchronizer是其以 long 形式维护同步状态的一个 版本
+				- 资源共享方式
+					- Exclusive(独占)：只有一个线程能执行，如ReentrantLock。又可分为公平锁和非公平锁
+					- Share(共享)：多个线程可同时执行，如Semaphore/CountDownLatch。
+				- unsafe类
+					- 提供CAS操作
+				- LockSupport类
+					- 用来创建锁和其他同步类的基本线程阻塞原语
+					- LockSupport.park()
+						- 当调用时，表示当前线程将会等待(阻塞)，直至获得许可
+					- LockSupport.unpark()
+						- 当调用时，必须把等待获得许可的线程作为参数进行传递
+						- 调用时需要确保线程仍旧存活
+						- Thread.sleep()、Object.wait()、Condition.await()、LockSupport.park()的区别? 
+						- 如果在wait()之前执行了notify()会怎样? 
+						- 如果在park()之前执行了unpark()会怎样?
+		- Collections
+			- ArrayBlockingQueue
+			- LinkedBlockingQueue
+			- LinkedBlockingDeque
+			- ConcurrentLinkedQueue
+			- ConcurrentLinkedDeque
+			- DelayQueue
+			- PriorityBlockingQueue
+			- SynchronousQueue
+			- LinkedTransferQueue
+			- CopyOnWriteArrayList
+			- CopyOnWriteArraySet
+			- ConcurrentSkipListSet
+			- ConcurrentSkipListMap
+		- Atomic
+			- 
+		- Executors
 	- String
 		- 不可变的好处
 			- hash值也不可变
