@@ -237,6 +237,17 @@ rocketmq
 	- 通信模式
 		- 点对点
 		- 订阅发布
+		- 原理
+			- 使用netty构建
+			- 分为Reactor主线程、Reactor线程池和业务线程池（Woker、SendMessage等）
+				- Reactor主线程负责跟各种Producer、Consumer之类的建立SocketChannel长连接
+					- SocketChannel使用了epoll进行链接
+				- Reactor线程池并发的监听多个连接的请求是否到达
+				- Worker请求并发的对多个请求进行预处理
+				- 业务线程池并发的对多个请求进行磁盘读写业务操作
+			- 使用Netty的ByteBuf内存池直接分配内存，不通过JVM堆分配，减少gc
+			- 使用共享的Handler（单例模式）减少netty对象创建
+			- 使用了零拷贝技术
 	- MQ使用场景
 		- 异步处理
 		- 应用解耦
